@@ -45,6 +45,12 @@ button.small { padding:6px 8px; font-size:13px; border-radius:6px; }
 .valor-emp { color: #c82333; font-weight:800; }
 .valor-juros { color: #0b5ed7; font-weight:800; }
 .valor-total { color: #198754; font-weight:800; }
+
+/* CORES REQUERIDAS */
+.caixa-entrada { color: #007bff; font-weight: 800; } /* azul */
+.caixa-saida   { color: #dc3545; font-weight: 800; } /* vermelho */
+.caixa-saldo   { color: #28a745; font-weight: 800; } /* verde */
+
 table { width:100%; border-collapse:collapse; margin-top:10px; display:block; overflow-x:auto; }
 th, td { border:1px solid #e6e6e6; padding:10px; text-align:center; white-space:nowrap; }
 th { background:#f1f1f1; cursor:pointer; position:relative; }
@@ -133,10 +139,10 @@ if (!localStorage.getItem("logado")) {
                 <p>Total em Juros: <span id="totalJurosGeral" class="valor-juros">R$ 0,00</span></p>
                 <p>Total a Receber: <span id="totalReceberGeral" class="valor-total">R$ 0,00</span></p>
                 <hr>
-                <p>Entradas Totais (acumulado): <span id="entradasAcumulado" class="valor-emp">R$ 0,00</span></p>
-                <p>Saídas Totais (acumulado): <span id="saidasAcumulado" class="valor-juros">R$ 0,00</span></p>
-                <p>Saldo Total Acumulado: <span id="saldoTotalAcumulado" class="valor-total">R$ 0,00</span></p>
-                <p>Saldo do Dia (hoje): <span id="saldoDoDia" class="valor-total">R$ 0,00</span></p>
+                <p>Entradas Totais (acumulado): <span id="entradasAcumulado" class="caixa-entrada">R$ 0,00</span></p>
+                <p>Saídas Totais (acumulado): <span id="saidasAcumulado" class="caixa-saida">R$ 0,00</span></p>
+                <p>Saldo Total Acumulado: <span id="saldoTotalAcumulado" class="caixa-saldo">R$ 0,00</span></p>
+                <p>Saldo do Dia (hoje): <span id="saldoDoDia" class="caixa-saldo">R$ 0,00</span></p>
             </div>
 
             <label>Buscar Cliente (Nome ou CPF):</label><input type="text" id="buscar" oninput="atualizarTabela()">
@@ -178,9 +184,9 @@ if (!localStorage.getItem("logado")) {
         <section id="paginaCaixa" class="page">
             <h3>Controle de Caixa</h3>
             <div class="dashboard">
-                <p>Entradas Totais: <span id="totalEntradas" class="valor-emp">R$ 0,00</span></p>
-                <p>Saídas Totais: <span id="totalSaidas" class="valor-juros">R$ 0,00</span></p>
-                <p>Saldo Total (Entradas - Saídas): <span id="saldoCaixaTotal" class="valor-total">R$ 0,00</span></p>
+                <p>Entradas Totais: <span id="totalEntradas" class="caixa-entrada">R$ 0,00</span></p>
+                <p>Saídas Totais: <span id="totalSaidas" class="caixa-saida">R$ 0,00</span></p>
+                <p>Saldo Total (Entradas - Saídas): <span id="saldoCaixaTotal" class="caixa-saldo">R$ 0,00</span></p>
             </div>
 
             <div class="card" style="margin-top:12px;">
@@ -409,6 +415,10 @@ function atualizarCaixa(){
     if(document.getElementById('saidasAcumulado')) document.getElementById('saidasAcumulado').innerText = formatarMoeda(totalSaidas);
     if(document.getElementById('saldoTotalAcumulado')) document.getElementById('saldoTotalAcumulado').innerText = formatarMoeda(totalEntradas - totalSaidas);
     if(document.getElementById('saldoDoDia')) document.getElementById('saldoDoDia').innerText = formatarMoeda(entradasHoje - saidasHoje);
+
+    // aplicar cores (caso os spans existam)
+    // Nota: as classes já estão no HTML; isso garante que, se usar outros IDs, fique coerente.
+    // (Nada extra a fazer aqui)
 }
 window.atualizarCaixa = atualizarCaixa;
 
@@ -524,4 +534,5 @@ setTimeout(()=>{ atualizarTabela(); calcularTotais(); atualizarCaixa(); }, 120);
 
 </body>
 </html>
+
 
