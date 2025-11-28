@@ -3,295 +3,249 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Financeiro — Hyago</title>
-
+<title>Sistema de Empréstimos Avançado</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: #fff;
-    margin: 0;
-    padding: 0;
-}
+    body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; }
+    .container { max-width: 900px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2, h3 { text-align: center; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
+    input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+    button { width: 100%; padding: 12px; border: none; border-radius: 8px; margin-top: 10px; font-size: 16px; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    .resultado, .dashboard { background: #eee; padding: 15px; border-radius: 10px; margin-top: 20px; }
+    .resultado p, .dashboard p { margin: 5px 0; font-weight: bold; }
+    .valor-emp { color: red; font-weight: bold; }
+    .valor-juros { color: blue; font-weight: bold; }
+    .valor-total { color: green; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; display: block; overflow-x: auto; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; white-space: nowrap; }
+    th { background: #ddd; cursor: pointer; }
+    .historico { margin-top: 20px; }
 
-header {
-    background: #222;
-    padding: 15px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-}
+    .piscar { animation: piscarAnim 1s infinite; }
+    @keyframes piscarAnim {
+        0% { background-color: #ffb3b3; }
+        50% { background-color: #fff; }
+        100% { background-color: #ffb3b3; }
+    }
 
-nav {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    background: #1a1a1a;
-    padding: 10px;
-}
-
-nav button {
-    padding: 10px 15px;
-    border: none;
-    background: #444;
-    color: white;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-nav button:hover {
-    background: #666;
-}
-
-section {
-    display: none;
-    padding: 20px;
-}
-
-input, select {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border-radius: 5px;
-    border: none;
-}
-
-button {
-    padding: 10px;
-    width: 100%;
-    margin-top: 10px;
-    background: #0a84ff;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-button:hover {
-    opacity: 0.8;
-}
-
-.table {
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
-}
-
-.table th, .table td {
-    padding: 8px;
-    border-bottom: 1px solid #333;
-}
-
-.blue { color: #4aa3ff; font-weight: bold; }
-.red { color: #ff4d4d; font-weight: bold; }
-.green { color: #4dff4d; font-weight: bold; }
+    @media(max-width: 600px){ input, select { font-size: 14px; padding: 10px; } button { font-size: 14px; padding: 10px; } td, th { font-size: 12px; padding: 6px; } }
 </style>
-
 </head>
 <body>
 
-<header>Sistema Financeiro — Hyago</header>
+<script>
+if (!localStorage.getItem("logado")) {
+    document.body.innerHTML = `
+    <div style='max-width:400px;margin:auto;margin-top:80px;background:white;padding:25px;border-radius:10px;box-shadow:0 0 10px #0003;'>
+        <h2 style='text-align:center;'>Login</h2>
+        <input id='loginUser' placeholder='Login' style='width:100%;padding:12px;margin-top:10px;'>
+        <input id='loginPass' type='password' placeholder='Senha' style='width:100%;padding:12px;margin-top:10px;'>
+        <button id='btnEntrar' style='width:100%;padding:14px;margin-top:18px;background:#007bff;color:white;border:none;border-radius:6px;'>Entrar</button>
+    </div>`;
 
-<nav>
-    <button onclick="showPage('cadastro')">Cadastro</button>
-    <button onclick="showPage('clientes')">Clientes Registrados</button>
-    <button onclick="showPage('resumo')">Resumo</button>
-    <button onclick="showPage('caixa')">Caixa</button>
-</nav>
+    document.getElementById("btnEntrar").onclick = () => {
+        let user = document.getElementById("loginUser").value.trim();
+        let pass = document.getElementById("loginPass").value.trim();
+        if (user === "H07y0321" && pass === "Helo2020@") {
+            localStorage.setItem("logado", "true");
+            location.reload();
+        } else { alert("Login ou senha incorretos!"); }
+    };
+}
+</script>
 
-<!-- CADASTRO -->
-<section id="cadastro">
-    <h2>Cadastro de Empréstimo</h2>
+<div class="container">
+    <h2>Sistema de Empréstimos Avançado</h2>
 
     <label>Nome do Cliente:</label>
-    <input id="nomeCliente">
+    <input type="text" id="nome">
+
+    <label>CPF:</label>
+    <input type="text" id="cpf">
+
+    <label>Telefone:</label>
+    <input type="text" id="telefone">
+
+    <label>Endereço:</label>
+    <input type="text" id="endereco">
 
     <label>Valor Emprestado:</label>
-    <input id="valorEmp" type="number">
+    <input type="number" id="valor" step="0.01" oninput="atualizarCalculo()">
+
+    <label>Porcentagem de Juros (%):</label>
+    <input type="number" id="juros" step="0.1" oninput="atualizarCalculo()">
 
     <label>Data do Empréstimo:</label>
-    <input id="dataEmp" type="date">
+    <input type="date" id="dataEmp">
 
-    <button onclick="cadastrarEmprestimo()">Cadastrar</button>
-</section>
+    <label>Data de Vencimento:</label>
+    <input type="date" id="dataVenc">
 
-<!-- CLIENTES REGISTRADOS -->
-<section id="clientes">
-    <h2>Clientes Registrados</h2>
-    <table class="table" id="tabelaClientes"></table>
-</section>
+    <div class="resultado">
+        <p>Valor: <span id="prevValor" class="valor-emp">R$ 0,00</span></p>
+        <p>Juros: <span id="prevJuros" class="valor-juros">R$ 0,00</span></p>
+        <p>Total a Receber: <span id="prevFinal" class="valor-total">R$ 0,00</span></p>
+    </div>
 
-<!-- RESUMO -->
-<section id="resumo">
-    <h2>Resumo Geral</h2>
-    <p id="resumoConteudo"></p>
-</section>
+    <button style="background:#28a745;color:white;" onclick="salvarCliente()">Salvar Cliente</button>
+</div>
 
-<!-- CAIXA -->
-<section id="caixa">
-    <h2>Controle de Caixa</h2>
+<div class="container dashboard">
+    <h3>Resumo Geral</h3>
+    <p>Total de Clientes: <span id="totalClientes">0</span></p>
+    <p>Clientes Pagos: <span id="totalPagos">0</span></p>
+    <p>Clientes Pendentes: <span id="totalPendentes">0</span></p>
+    <p>Clientes Atrasados: <span id="totalAtrasados">0</span></p>
+    <p>Valor Total Emprestado: <span id="totalEmpGeral" class="valor-emp">R$ 0,00</span></p>
+    <p>Total em Juros: <span id="totalJurosGeral" class="valor-juros">R$ 0,00</span></p>
+    <p>Total a Receber: <span id="totalReceberGeral" class="valor-total">R$ 0,00</span></p>
 
-    <label>Tipo:</label>
-    <select id="tipoLancamento">
-        <option value="entrada">Entrada</option>
-        <option value="saida">Saída</option>
+    <label>Buscar Cliente (Nome ou CPF):</label>
+    <input type="text" id="buscar" oninput="atualizarTabela()">
+
+    <label>Filtrar por Status:</label>
+    <select id="filtroStatus" onchange="atualizarTabela()">
+        <option value="todos">Todos</option>
+        <option value="pendente">Pendentes</option>
+        <option value="pago">Pagos</option>
+        <option value="atrasado">Atrasados</option>
     </select>
 
-    <label>Valor:</label>
-    <input id="valorLancamento" type="number">
+    <button style="background:#ffc107;color:black;" onclick="exportarPDF()">Exportar PDF</button>
+    <button style="background:#17a2b8;color:white;" onclick="enviarAlertaAtrasados()">📩 Enviar alerta para atrasados</button>
+</div>
 
-    <label>Motivo:</label>
-    <input id="motivoLancamento">
-
-    <button onclick="adicionarLancamento()">Lançar no Caixa</button>
-
-    <h3>Resumo do Caixa</h3>
-    <p class="blue" id="entradasTotais"></p>
-    <p class="red" id="saidasTotais"></p>
-    <p class="green" id="saldoTotal"></p>
-
-    <h3>Histórico Completo</h3>
-    <table class="table" id="historicoCaixa"></table>
-</section>
+<div class="container historico">
+    <h3>Clientes Registrados</h3>
+    <table id="tabelaClientes">
+        <thead>
+            <tr>
+                <th onclick="ordenarTabela('nome')">Nome</th>
+                <th onclick="ordenarTabela('valor')">Valor</th>
+                <th onclick="ordenarTabela('valorJuros')">Juros</th>
+                <th onclick="ordenarTabela('valorFinal')">Total</th>
+                <th onclick="ordenarTabela('dataVenc')">Vencimento</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
 
 <script>
-// ============================
-// SISTEMA DE NAVEGAÇÃO
-// ============================
-function showPage(page) {
-    document.querySelectorAll("section").forEach(sec => sec.style.display = "none");
-    document.getElementById(page).style.display = "block";
+let clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
+let ordemAtual = '';
+atualizarTabela();
+calcularTotais();
 
-    if (page === "clientes") atualizarTabelaClientes();
-    if (page === "resumo") atualizarResumo();
-    if (page === "caixa") atualizarCaixa();
+function formatarMoeda(valor){ return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+function atualizarCalculo(){
+    let valor = parseFloat(document.getElementById('valor').value) || 0;
+    let juros = parseFloat(document.getElementById('juros').value) || 0;
+    let vJuros = (valor * juros)/100;
+    let vFinal = valor + vJuros;
+    document.getElementById('prevValor').innerText = formatarMoeda(valor);
+    document.getElementById('prevJuros').innerText = formatarMoeda(vJuros);
+    document.getElementById('prevFinal').innerText = formatarMoeda(vFinal);
 }
 
-// BANCO LOCAL
-let emprestimos = [];
-let caixa = [];
+function salvarCliente(){
+    let nome = document.getElementById("nome").value.trim();
+    let cpf = document.getElementById("cpf").value.trim();
+    let telefone = document.getElementById("telefone").value.trim();
+    let endereco = document.getElementById("endereco").value.trim();
+    let valor = parseFloat(document.getElementById("valor").value) || 0;
+    let juros = parseFloat(document.getElementById("juros").value) || 0;
+    let dataEmp = document.getElementById("dataEmp").value;
+    let dataVenc = document.getElementById("dataVenc").value;
+    if(!nome || !cpf || !telefone || valor <= 0 || !dataEmp || !dataVenc){ alert('Preencha todos os campos corretamente!'); return; }
+    let valorJuros = (valor * juros)/100;
+    let valorFinal = valor + valorJuros;
+    clientes.push({nome, cpf, telefone, endereco, valor, juros, valorJuros, valorFinal, dataEmp, dataVenc, pago:false});
+    localStorage.setItem("clientes", JSON.stringify(clientes));
+    atualizarTabela(); calcularTotais(); alert("Cliente salvo com sucesso!");
+}
 
-// ============================
-// CADASTRAR EMPRÉSTIMO
-// ============================
-function cadastrarEmprestimo() {
-    let nome = document.getElementById("nomeCliente").value;
-    let valor = Number(document.getElementById("valorEmp").value);
-    let data = document.getElementById("dataEmp").value;
+function excluirCliente(i){ clientes.splice(i,1); localStorage.setItem("clientes", JSON.stringify(clientes)); atualizarTabela(); calcularTotais(); }
+function marcarPago(i){ clientes[i].pago = true; localStorage.setItem("clientes", JSON.stringify(clientes)); atualizarTabela(); calcularTotais(); }
+function cobrar(telefone, valorFinal, dataVenc, nome){
+    let valorFormatado = valorFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    let msg = `Opa ${nome}, sua dívida de ${valorFormatado} vence em ${dataVenc}. Por favor, realize o pagamento via PIX (chave: Hyagosousasous@gmail.com). Obrigado!`;
+    window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(msg)}`, "_blank");
+}
 
-    if (!nome || !valor) {
-        alert("Preencha todos os campos!");
-        return;
-    }
+function enviarAlertaAtrasados(){
+    let hoje = new Date();
+    let atrasados = clientes.filter(c => !c.pago && c.dataVenc && new Date(c.dataVenc) < hoje);
+    if(atrasados.length === 0){ alert("Não há clientes atrasados no momento!"); return; }
+    atrasados.forEach(c => { cobrar(c.telefone, c.valorFinal, c.dataVenc, c.nome); });
+}
 
-    emprestimos.push({
-        nome,
-        valor,
-        data,
-        pago: false
+function calcularTotais(){
+    let totalEmp=0, totalJuros=0, totalFinal=0;
+    let pagos=0, pendentes=0, atrasados=0;
+    let hoje = new Date();
+    clientes.forEach(c=>{
+        if(c.pago) pagos++;
+        else { pendentes++; if(c.dataVenc && new Date(c.dataVenc)<hoje) atrasados++; totalEmp+=c.valor; totalJuros+=c.valorJuros; totalFinal+=c.valorFinal; }
     });
-
-    alert("Empréstimo cadastrado!");
-    document.getElementById("nomeCliente").value = "";
-    document.getElementById("valorEmp").value = "";
-    document.getElementById("dataEmp").value = "";
+    document.getElementById("totalEmpGeral").innerText = formatarMoeda(totalEmp);
+    document.getElementById("totalJurosGeral").innerText = formatarMoeda(totalJuros);
+    document.getElementById("totalReceberGeral").innerText = formatarMoeda(totalFinal);
+    document.getElementById("totalClientes").innerText = clientes.length;
+    document.getElementById("totalPagos").innerText = pagos;
+    document.getElementById("totalPendentes").innerText = pendentes;
+    document.getElementById("totalAtrasados").innerText = atrasados;
 }
 
-// ============================
-// TABELA DE CLIENTES
-// ============================
-function atualizarTabelaClientes() {
-    let tabela = document.getElementById("tabelaClientes");
-    tabela.innerHTML = `
-        <tr><th>Cliente</th><th>Valor</th><th>Status</th><th>Ação</th></tr>
-    `;
-
-    emprestimos.forEach((e, i) => {
-        tabela.innerHTML += `
-            <tr>
-                <td>${e.nome}</td>
-                <td>R$ ${e.valor.toFixed(2)}</td>
-                <td>${e.pago ? "Pago" : "Em aberto"}</td>
-                <td>
-                    ${!e.pago ? `<button onclick="marcarPago(${i})">Pagar</button>` : ""}
-                </td>
-            </tr>
+function atualizarTabela(){
+    let tbody=document.querySelector("#tabelaClientes tbody");
+    tbody.innerHTML="";
+    let busca = document.getElementById('buscar').value.toLowerCase();
+    let filtro = document.getElementById('filtroStatus').value;
+    clientes.forEach((c,i)=>{
+        let atrasado=false;
+        let hoje=new Date();
+        if(c.dataVenc && new Date(c.dataVenc)<hoje && !c.pago) atrasado=true;
+        let corLinha = c.pago ? '#c8f7c5' : (atrasado ? '#ffb3b3' : 'white');
+        if(busca && !(c.nome.toLowerCase().includes(busca) || c.cpf.toLowerCase().includes(busca))) return;
+        if(filtro==='pendente' && (c.pago || atrasado)) return;
+        if(filtro==='pago' && !c.pago) return;
+        if(filtro==='atrasado' && !atrasado) return;
+        let tr = document.createElement('tr');
+        tr.style.backgroundColor = corLinha;
+        if(atrasado && !c.pago) tr.classList.add('piscar');
+        tr.innerHTML = `
+            <td>${c.nome}</td>
+            <td class="valor-emp">${formatarMoeda(c.valor)}</td>
+            <td class="valor-juros">${formatarMoeda(c.valorJuros)}</td>
+            <td class="valor-total">${formatarMoeda(c.valorFinal)}</td>
+            <td>${c.dataVenc||'-'}</td>
+            <td>
+                <button onclick="cobrar('${c.telefone}', ${c.valorFinal}, '${c.dataVenc}', '${c.nome}')">💰 Cobrar</button>
+                <button onclick="excluirCliente(${i})" style="background:red;color:white; margin-top:5px;">❌ Excluir</button>
+                ${!c.pago ? `<button onclick="marcarPago(${i})" style="background:green;color:white;margin-top:5px;">✅ Pago</button>` : ''}
+            </td>
         `;
+        tbody.appendChild(tr);
     });
 }
 
-function marcarPago(i) {
-    emprestimos[i].pago = true;
-    alert("Pagamento registrado! (Sem lançamento automático no caixa)");
-    atualizarTabelaClientes();
+function ordenarTabela(campo){
+    if(ordemAtual===campo){ clientes.reverse(); }
+    else { clientes.sort((a,b)=>{ if(a[campo]<b[campo]) return -1; if(a[campo]>b[campo]) return 1; return 0; }); ordemAtual=campo; }
+    atualizarTabela();
 }
 
-// ============================
-// RESUMO
-// ============================
-function atualizarResumo() {
-    let totalEmp = emprestimos.reduce((acc, e) => acc + e.valor, 0);
-    let totalReceb = emprestimos.filter(e => e.pago).reduce((acc, e) => acc + e.valor, 0);
-
-    document.getElementById("resumoConteudo").innerHTML = `
-        <p>Total Emprestado: <b>R$ ${totalEmp.toFixed(2)}</b></p>
-        <p>Total Recebido: <b>R$ ${totalReceb.toFixed(2)}</b></p>
-        <p>Total Em Aberto: <b>R$ ${(totalEmp - totalReceb).toFixed(2)}</b></p>
-    `;
+function exportarPDF(){
+    let conteudo = document.querySelector('.historico').innerHTML;
+    let win = window.open('', '', 'width=900,height=700');
+    win.document.write('<html><head><title>Relatório de Clientes</title></head><body>'+conteudo+'</body></html>');
+    win.document.close();
+    win.print();
 }
-
-// ============================
-// CAIXA MANUAL
-// ============================
-function adicionarLancamento() {
-    let tipo = document.getElementById("tipoLancamento").value;
-    let valor = Number(document.getElementById("valorLancamento").value);
-    let motivo = document.getElementById("motivoLancamento").value;
-    let data = new Date().toLocaleString();
-
-    if (!valor || !motivo) {
-        alert("Preencha todos os campos!");
-        return;
-    }
-
-    caixa.push({ tipo, valor, motivo, data });
-
-    document.getElementById("valorLancamento").value = "";
-    document.getElementById("motivoLancamento").value = "";
-
-    atualizarCaixa();
-}
-
-function atualizarCaixa() {
-    let entradas = caixa.filter(c => c.tipo === "entrada").reduce((acc, c) => acc + c.valor, 0);
-    let saidas = caixa.filter(c => c.tipo === "saida").reduce((acc, c) => acc + c.valor, 0);
-    let saldo = entradas - saidas;
-
-    document.getElementById("entradasTotais").innerHTML = `Entradas Totais: R$ ${entradas.toFixed(2)}`;
-    document.getElementById("saidasTotais").innerHTML = `Retorno Investido: R$ ${saidas.toFixed(2)}`;
-    document.getElementById("saldoTotal").innerHTML = `Lucro: R$ ${saldo.toFixed(2)}`;
-
-    let tabela = document.getElementById("historicoCaixa");
-    tabela.innerHTML = `
-        <tr><th>Tipo</th><th>Valor</th><th>Motivo</th><th>Data</th></tr>
-    `;
-
-    caixa.forEach(c => {
-        tabela.innerHTML += `
-            <tr>
-                <td>${c.tipo}</td>
-                <td>R$ ${c.valor.toFixed(2)}</td>
-                <td>${c.motivo}</td>
-                <td>${c.data}</td>
-            </tr>
-        `;
-    });
-}
-
-showPage('cadastro');
 </script>
 
 </body>
 </html>
-
-
