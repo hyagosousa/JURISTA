@@ -29,7 +29,24 @@
         100% { background-color: #ffb3b3; }
     }
 
-    @media(max-width: 600px){ input, select { font-size: 14px; padding: 10px; } button { font-size: 14px; padding: 10px; } td, th { font-size: 12px; padding: 6px; } }
+    /* MENU */
+    .menu { display: flex; justify-content: space-around; background: #222; padding: 10px; }
+    .menu button {
+        flex: 1;
+        margin: 5px;
+        padding: 14px;
+        border: none;
+        border-radius: 6px;
+        background: #444;
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+    }
+    .menu button.ativo { background: #007bff; }
+
+    .aba { display: none; }
+    .aba.ativa { display: block; }
+
 </style>
 </head>
 <body>
@@ -55,7 +72,25 @@ if (!localStorage.getItem("logado")) {
 }
 </script>
 
-<div class="container">
+<!-- MENU -->
+<div class="menu">
+    <button onclick="abrirAba('cadastro')" class="ativo" id="btnCadastro">Cadastro</button>
+    <button onclick="abrirAba('resumo')" id="btnResumo">Resumo Geral</button>
+    <button onclick="abrirAba('clientes')" id="btnClientes">Clientes Registrados</button>
+</div>
+
+<script>
+function abrirAba(aba) {
+    document.querySelectorAll(".aba").forEach(a => a.classList.remove("ativa"));
+    document.querySelectorAll(".menu button").forEach(b => b.classList.remove("ativo"));
+
+    document.getElementById("aba_" + aba).classList.add("ativa");
+    document.getElementById("btn" + aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add("ativo");
+}
+</script>
+
+<!-- ABA 1 - CADASTRO -->
+<div class="container aba ativa" id="aba_cadastro">
     <h2>Sistema de Empréstimos Avançado</h2>
 
     <label>Nome do Cliente:</label>
@@ -91,8 +126,10 @@ if (!localStorage.getItem("logado")) {
     <button style="background:#28a745;color:white;" onclick="salvarCliente()">Salvar Cliente</button>
 </div>
 
-<div class="container dashboard">
+<!-- ABA 2 - RESUMO GERAL -->
+<div class="container aba" id="aba_resumo">
     <h3>Resumo Geral</h3>
+
     <p>Total de Clientes: <span id="totalClientes">0</span></p>
     <p>Clientes Pagos: <span id="totalPagos">0</span></p>
     <p>Clientes Pendentes: <span id="totalPendentes">0</span></p>
@@ -116,7 +153,8 @@ if (!localStorage.getItem("logado")) {
     <button style="background:#17a2b8;color:white;" onclick="enviarAlertaAtrasados()">📩 Enviar alerta para atrasados</button>
 </div>
 
-<div class="container historico">
+<!-- ABA 3 – CLIENTES REGISTRADOS -->
+<div class="container historico aba" id="aba_clientes">
     <h3>Clientes Registrados</h3>
     <table id="tabelaClientes">
         <thead>
@@ -188,7 +226,13 @@ function calcularTotais(){
     let hoje = new Date();
     clientes.forEach(c=>{
         if(c.pago) pagos++;
-        else { pendentes++; if(c.dataVenc && new Date(c.dataVenc)<hoje) atrasados++; totalEmp+=c.valor; totalJuros+=c.valorJuros; totalFinal+=c.valorFinal; }
+        else { 
+            pendentes++; 
+            if(c.dataVenc && new Date(c.dataVenc)<hoje) atrasados++; 
+            totalEmp+=c.valor; 
+            totalJuros+=c.valorJuros; 
+            totalFinal+=c.valorFinal; 
+        }
     });
     document.getElementById("totalEmpGeral").innerText = formatarMoeda(totalEmp);
     document.getElementById("totalJurosGeral").innerText = formatarMoeda(totalJuros);
@@ -202,8 +246,8 @@ function calcularTotais(){
 function atualizarTabela(){
     let tbody=document.querySelector("#tabelaClientes tbody");
     tbody.innerHTML="";
-    let busca = document.getElementById('buscar').value.toLowerCase();
-    let filtro = document.getElementById('filtroStatus').value;
+    let busca = document.getElementById('buscar')?.value.toLowerCase() || "";
+    let filtro = document.getElementById('filtroStatus')?.value || "todos";
     clientes.forEach((c,i)=>{
         let atrasado=false;
         let hoje=new Date();
@@ -239,7 +283,7 @@ function ordenarTabela(campo){
 }
 
 function exportarPDF(){
-    let conteudo = document.querySelector('.historico').innerHTML;
+    let conteudo = document.querySelector('#aba_clientes').innerHTML;
     let win = window.open('', '', 'width=900,height=700');
     win.document.write('<html><head><title>Relatório de Clientes</title></head><body>'+conteudo+'</body></html>');
     win.document.close();
@@ -249,3 +293,4 @@ function exportarPDF(){
 
 </body>
 </html>
+
