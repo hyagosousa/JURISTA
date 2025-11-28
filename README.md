@@ -1,262 +1,208 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema — Hyago Sousa</title>
+    <meta charset="UTF-8">
+    <title>Sistema de Empréstimos</title>
 
-<style>
-body {
-    background: #111;
-    color: #fff;
-    font-family: Arial;
-    margin: 0;
-    padding: 0;
-}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
 
-.container {
-    background: #1a1a1a;
-    padding: 20px;
-    margin: 15px;
-    border-radius: 10px;
-}
+        .container {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #ddd;
+        }
 
-button {
-    background: #007bff;
-    padding: 10px;
-    border: none;
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-top: 10px;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-button.pago {
-    background: #25d366;
-}
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #222;
-}
+        button {
+            padding: 8px 12px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover { opacity: 0.8; }
 
-table th, table td {
-    padding: 10px;
-    border: 1px solid #333;
-}
-</style>
-
+        .pago {
+            background: #28a745 !important;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Cadastro de Clientes</h2>
+    <div class="container">
+        <h2>Cadastro de Empréstimo</h2>
 
-    <label>Nome:</label>
-    <input id="nome" type="text">
+        <label>Cliente:</label>
+        <input type="text" id="nome"><br><br>
 
-    <label>Valor Total:</label>
-    <input id="valor" type="number">
+        <label>Valor:</label>
+        <input type="number" id="valor"><br><br>
 
-    <button onclick="adicionarCliente()">Salvar Cliente</button>
-</div>
+        <label>Juros (%):</label>
+        <input type="number" id="juros"><br><br>
 
-<div class="container">
-    <h2>Clientes Cadastrados</h2>
+        <button onclick="adicionarCliente()">Adicionar</button>
+    </div>
 
-    <table id="tabelaClientes">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Valor</th>
-                <th>Status</th>
-                <th>Pago</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
+    <div class="container">
+        <h2>Clientes</h2>
 
-<!-- RESUMO GERAL -->
-<div class="container">
-    <h2>Resumo Geral</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Valor</th>
+                    <th>Juros</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="listaClientes"></tbody>
+        </table>
+    </div>
 
-    <p>Entradas Totais (Caixa): <span id="totalEntradaCaixa">R$ 0,00</span></p>
-    <p>Valor Investido (Saídas): <span id="totalSaidaCaixa">R$ 0,00</span></p>
-    <p>Lucro Total: <span id="lucroCaixa">R$ 0,00</span></p>
-</div>
+    <!-- ===================== CONTROLE DE CAIXA ===================== -->
 
-<!-- CONTROLE DE CAIXA -->
-<div class="container">
-    <h2>Controle de Caixa</h2>
+    <div class="container">
+        <h2>Controle de Caixa</h2>
 
-    <label>Tipo:</label>
-    <select id="cxTipo">
-        <option value="entrada">Entrada</option>
-        <option value="saida">Saída</option>
-    </select>
+        <p><strong>Total Recebido:</strong> <span id="totalCaixa">R$ 0,00</span></p>
 
-    <label>Valor:</label>
-    <input id="cxValor" type="number">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Valor Recebido</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCaixa"></tbody>
+        </table>
+    </div>
 
-    <label>Descrição:</label>
-    <input id="cxDesc" type="text">
+    <script>
+        let clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
+        let caixa = JSON.parse(localStorage.getItem("caixa") || "[]");
 
-    <button onclick="salvarCaixa()">Registrar</button>
+        renderClientes();
+        renderCaixa();
 
-    <h3>Histórico</h3>
+        function formatarMoeda(v) {
+            return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+        }
 
-    <table id="tabelaCaixa">
-        <thead>
-            <tr>
-                <th>Tipo</th>
-                <th>Valor</th>
-                <th>Descrição</th>
-                <th>Data/Hora</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-</div>
+        function adicionarCliente() {
+            let nome = document.getElementById("nome").value;
+            let valor = Number(document.getElementById("valor").value);
+            let juros = Number(document.getElementById("juros").value);
 
+            if (!nome || !valor || !juros) {
+                alert("Preencha todos os campos!");
+                return;
+            }
 
-<script>
-let clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
-let caixa = JSON.parse(localStorage.getItem("caixa") || "[]");
+            let valorFinal = valor + (valor * (juros / 100));
 
-function formatar(valor){
-    return Number(valor).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
-}
+            clientes.push({
+                nome,
+                valor,
+                juros,
+                valorFinal,
+                pago: false
+            });
 
-function adicionarCliente(){
-    let nome = document.getElementById("nome").value;
-    let valor = Number(document.getElementById("valor").value);
+            salvarClientes();
+            renderClientes();
+        }
 
-    if(!nome || valor <= 0){
-        alert("Preencha todos os campos!");
-        return;
-    }
+        function salvarClientes() {
+            localStorage.setItem("clientes", JSON.stringify(clientes));
+        }
 
-    clientes.push({
-        id: Date.now(),
-        nome: nome,
-        valor: valor,
-        pago: false
-    });
+        function renderClientes() {
+            let lista = document.getElementById("listaClientes");
+            lista.innerHTML = "";
 
-    localStorage.setItem("clientes", JSON.stringify(clientes));
+            clientes.forEach((c, i) => {
+                lista.innerHTML += `
+                    <tr>
+                        <td>${c.nome}</td>
+                        <td>${formatarMoeda(c.valor)}</td>
+                        <td>${c.juros}%</td>
+                        <td>${formatarMoeda(c.valorFinal)}</td>
+                        <td>
+                            <button class="${c.pago ? "pago" : ""}" onclick="marcarPago(${i})">
+                                ${c.pago ? "Pago" : "Pagar"}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
 
-    carregarClientes();
-}
+        // ==================== CONTROLE DE PAGAMENTO ====================
 
-function carregarClientes(){
-    let tbody = document.querySelector("#tabelaClientes tbody");
-    tbody.innerHTML = "";
+        function marcarPago(i) {
+            if (!clientes[i].pago) {
+                registrarCaixa(clientes[i].nome, clientes[i].valorFinal);
+            }
 
-    clientes.forEach((c, i)=>{
-        let tr = document.createElement("tr");
+            clientes[i].pago = true;
+            salvarClientes();
+            renderClientes();
+        }
 
-        tr.innerHTML = `
-            <td>${c.nome}</td>
-            <td>${formatar(c.valor)}</td>
-            <td>${c.pago ? "Pago" : "A receber"}</td>
-            <td><button class="pago" onclick="marcarPago(${i})">PAGO</button></td>
-        `;
+        // ==================== CONTROLE DE CAIXA ====================
 
-        tbody.appendChild(tr);
-    });
-}
+        function registrarCaixa(nome, valor) {
+            caixa.push({
+                data: new Date().toLocaleString(),
+                nome,
+                valor
+            });
 
-function marcarPago(i){
-    if(clientes[i].pago){
-        alert("Esse cliente já está pago!");
-        return;
-    }
+            localStorage.setItem("caixa", JSON.stringify(caixa));
+            renderCaixa();
+        }
 
-    clientes[i].pago = true;
-    localStorage.setItem("clientes", JSON.stringify(clientes));
+        function renderCaixa() {
+            let tabela = document.getElementById("tabelaCaixa");
+            let total = 0;
 
-    // VALOR RECEBIDO PELO CLIENTE
-    let valorRecebido = clientes[i].valor;
+            tabela.innerHTML = "";
 
-    // LANÇAMENTO AUTOMÁTICO NO CAIXA
-    caixa.push({
-        tipo: "entrada",
-        valor: valorRecebido,
-        descricao: "Pagamento do cliente: " + clientes[i].nome,
-        data: new Date().toLocaleString()
-    });
+            caixa.forEach(item => {
+                total += item.valor;
 
-    localStorage.setItem("caixa", JSON.stringify(caixa));
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${item.data}</td>
+                        <td>${item.nome}</td>
+                        <td>${formatarMoeda(item.valor)}</td>
+                    </tr>
+                `;
+            });
 
-    atualizarCaixaResumo();
-    atualizarTabelaCaixa();
-    carregarClientes();
-
-    alert("Pagamento registrado e entrada lançada no caixa!");
-}
-
-function salvarCaixa(){
-    let tipo = document.getElementById("cxTipo").value;
-    let valor = Number(document.getElementById("cxValor").value);
-    let desc = document.getElementById("cxDesc").value;
-
-    if(valor <= 0 || !desc){
-        alert("Preencha todos os campos!");
-        return;
-    }
-
-    caixa.push({
-        tipo: tipo,
-        valor: valor,
-        descricao: desc,
-        data: new Date().toLocaleString()
-    });
-
-    localStorage.setItem("caixa", JSON.stringify(caixa));
-
-    atualizarCaixaResumo();
-    atualizarTabelaCaixa();
-
-    alert("Lançamento registrado!");
-}
-
-function atualizarCaixaResumo(){
-    let entradas = 0;
-    let saidas = 0;
-
-    caixa.forEach(c=>{
-        if(c.tipo === "entrada") entradas += c.valor;
-        if(c.tipo === "saida")   saidas += c.valor;
-    });
-
-    document.getElementById("totalEntradaCaixa").innerText = formatar(entradas);
-    document.getElementById("totalSaidaCaixa").innerText = formatar(saidas);
-    document.getElementById("lucroCaixa").innerText = formatar(entradas - saidas);
-}
-
-function atualizarTabelaCaixa(){
-    let tbody = document.querySelector("#tabelaCaixa tbody");
-    tbody.innerHTML = "";
-
-    caixa.forEach(r=>{
-        let tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${r.tipo}</td>
-            <td>${formatar(r.valor)}</td>
-            <td>${r.descricao}</td>
-            <td>${r.data}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-carregarClientes();
-atualizarCaixaResumo();
-atualizarTabelaCaixa();
-</script>
-
+            document.getElementById("totalCaixa").innerText = formatarMoeda(total);
+        }
+    </script>
 </body>
 </html>
 
